@@ -22,10 +22,10 @@ def maketemplater(ui, repo, tmpl):
     t.use_template(tmpl)
     return t
 
-def changedlines(ui, repo, ctx1, ctx2, fns):
+def changedlines(ui, repo, ctx1, ctx2, fns, diffopts):
     added, removed = 0, 0
     fmatch = scmutil.matchfiles(repo, fns)
-    diff = ''.join(patch.diff(repo, ctx1.node(), ctx2.node(), fmatch))
+    diff = ''.join(patch.diff(repo, ctx1.node(), ctx2.node(), fmatch, opts=diffopts))
     for l in diff.split('\n'):
         if l.startswith("+") and not l.startswith("+++ "):
             added += 1
@@ -71,7 +71,8 @@ def countrate(ui, repo, amap, *pats, **opts):
                 return
 
             ctx1 = parents[0]
-            lines = changedlines(ui, repo, ctx1, ctx, fns)
+            diffopts = patch.diffopts(repo.ui, opts)
+            lines = changedlines(ui, repo, ctx1, ctx, fns, diffopts)
             rate[key] = [r + l for r, l in zip(rate.get(key, (0, 0)), lines)]
 
         state['count'] += 1
@@ -192,6 +193,6 @@ cmdtable = {
           ('', 'diffstat', False, _('display added/removed lines separately')),
           ('', 'aliases', '',
            _('file with email aliases'), _('FILE')),
-          ] + commands.walkopts,
+          ] + commands.diffwsopts + commands.walkopts,
          _("hg churn [-d DATE] [-r REV] [--aliases FILE] [FILE]")),
 }
